@@ -2,6 +2,10 @@ import './App.css';
 import {useState, useEffect} from "react";
 import Axios from "axios"
 import 'bootstrap/dist/css/bootstrap.min.css';
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
+
+const noti = withReactContent(Swal)
 
 function App() {
   
@@ -23,8 +27,13 @@ const add = () =>{
       anios:anios
     }).then(()=>{
       getEmpleados();
-       limpiarCampos();
-      alert("Empleado registrado");
+      limpiarCampos();
+      noti.fire({
+        title: <strong>Empleado guardado!</strong>,
+        html: <i>El empleado {nombre} registrado con exito!</i>,
+        icon: 'success',
+        timer: 3000
+      });
   }).catch((error) => {
     console.error("Error:", error);
   })
@@ -40,9 +49,28 @@ const add = () =>{
     }).then(() => {
       getEmpleados();
       limpiarCampos();
-      alert("Empleado actualizado")
+      noti.fire({
+        title: <strong>Empleado actualizado!</strong>,
+        html: <i>El empleado {nombre} actualizado con exito!</i>,
+        icon: 'success',
+        timer: 3000
+      });
     });
-  };
+  }
+//funcion para eliminar empleados
+const deleteEmp = (id) =>{
+  Axios.delete(`http://localhost:3001/delete/${id}`).then(()=>{
+    getEmpleados();
+    limpiarCampos();
+    noti.fire({
+      title: <strong>Empleado borrado!</strong>,
+      html: <i>El empleado ha sido eleminado con exito!</i>,
+      icon: 'success',
+      timer: 3000
+  })
+  });
+}
+
   const limpiarCampos = () => {
     setNombre("");
     setEdad("");
@@ -50,23 +78,24 @@ const add = () =>{
     setPoblacion("");
     setAnios("");
     setId("");
-    setEditar(false);
+    setEditar(false); //para que vuelva a mostrar boton registrar
 
   }
   const editarEmpleado = (val) =>{
-    setEditar(true);
-    setNombre(val.nombre);
-    setEdad(val.edad);
-    setCargo(val.cargo);
-    setPoblacion(val.poblacion);
-    setAnios(val.anios);
-    setId(val.id);
+    if (val) {
+      setEditar(true);
+      setNombre (val.nombre);
+      setEdad(val.edad|| "");
+      setCargo(val.cargo || "");
+      setPoblacion(val.poblacion || "");
+      setAnios(val.anios || "");
+      setId(val.id || "");
+      console.log(val);
+    }
   };
   const getEmpleados = () => {
     Axios.get("http://localhost:3001/empleados").then((response) => {
-      console.log(response.data)
-      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-        const data = response.data[0]; // Obtén el primer elemento del array
+      console.log(response.data);
         const empleados = response.data.map((row) => ({
           id: row[0],
           nombre: row[1],
@@ -75,16 +104,16 @@ const add = () =>{
           cargo: row[4],
           anios: row[5],
         }));
-        setEmpleados(empleados);
-      } else {
+        if (empleados && Array.isArray(empleados) && empleados.length > 0) {
+          setEmpleados(empleados);    
+        } else {
         setEmpleados([]); // Establece empleados en un array vacío si no hay datos
-      }
+        }
     })
     .catch((error) => {
       console.error("Error:", error);
     });
   }
-
 
   useEffect(() => {
     getEmpleados()
@@ -100,6 +129,7 @@ const add = () =>{
           <div className = "input-group mb-3">
               <span className = "input-group-text" id="basic-addon1">Nombre:</span>     
               <input type="text" 
+                    value={nombre}
                     onChange={(event) => {
                     setNombre(event.target.value);
                     }}
@@ -187,7 +217,9 @@ const add = () =>{
                                 editarEmpleado(val);
                                 }} 
                                 className="btn btn-success">Editar</button>
-                        <button type="button" className="btn btn-danger">Eliminar</button>                   
+                        <button type="button" onClick={() =>{
+                                deleteEmp(val.id);
+                                }}  className="btn btn-danger">Eliminar</button>                   
                     </div>      
                 </td>
                 </tr>             
