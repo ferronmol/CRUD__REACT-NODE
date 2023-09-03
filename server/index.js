@@ -131,7 +131,39 @@ app.put("/update", async (req, res) => {
         res.status(500).send("Error al actualizar empleado" + err.message);
         }  
 })
+//  borrado 
+app.delete("/delete/:id", async (req, res) => {
+    const id = req.params.id;
 
+    try {
+        // Establece la conexión a Oracle
+        const connection = await oracledb.getConnection(dbConfig);
+    
+        // Define la consulta SQL para actualizar
+        const sql = 'DELETE FROM empleados WHERE id= :id'
+        
+    
+        // Ejecuta la consulta de actualizado
+        const result = await connection.execute(
+        sql,
+        {  
+            id,   
+        },
+        {
+            autoCommit: true, // Confirma automáticamente la transacción
+        }
+        );
+    
+        // Cierra la conexión
+        await connection.close();
+    
+        console.log("Empleado ELIMINADO con éxito!!");
+        res.send("Empleado ELIMINADO con éxito. 200 OK");
+        } catch (err) {
+        console.error("Error al ELIMINAR empleado:", err);
+        res.status(500).send("Error al ELIMINAR empleado" + err.message);
+        }  
+})
 
 app.listen(3001,()=> {
     console.log("Corriendo en el puerto 3001");
